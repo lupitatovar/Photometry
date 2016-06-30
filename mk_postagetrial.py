@@ -155,7 +155,7 @@ def calc_slope(channel, col, row, source):
                #'kplr2013065115251_ffi-cal.fits', #'kplr2013098115308_ffi-cal.fits']
 
 ######## Makes the plot look nice #####    
-    fig= plt.figure(figsize(11,8))  #syntax error
+    fig= plt.figure(figsize=(11,8))  #syntax error
     #ax1 = fig.add_subplot(2, 2, j+1)
     ax1= plt.gca() #syntax error
 
