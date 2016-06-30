@@ -154,21 +154,21 @@ def calc_slope(channel, col, row, source):
                #'kplr2012341215621_ffi-cal.fits', #'kplr2013011160902_ffi-cal.fits', #'kplr2013038133130_ffi-cal.fits',
                #'kplr2013065115251_ffi-cal.fits', #'kplr2013098115308_ffi-cal.fits']
 
-######## Makes the plot look nice #####    
-    fig= plt.figure(figsize=(11,8))  
+######## Makes the plot look nice ##############    
+    plt.figure(figsize=(11,8)) 
     #ax1 = fig.add_subplot(2, 2, j+1)
-    ax1= plt.gca() 
+    ax1 = plt.gca() 
 
     plt.gcf().subplots_adjust(bottom=0.17, wspace=0.0, top=0.86, right=0.94, left=0.16)
 
 
-    #flag = 0
+    flag = 0
 
-    #slope = np.zeros(4)
+    slope = np.zeros(4)
 ##########################################
 
 #defines postage stamp#
-    if channel[3] in [49,50,51,52]: 
+    if channel[3] in [49,50,51,52]:
         vals=[1,2,3,0]
     else:
         vals=[0,1,2,3]
@@ -237,16 +237,16 @@ def calc_slope(channel, col, row, source):
                     initial_guess=[amp,rowd,cold,5,3,np.pi/4]
                
 #optimal result, and covariance
-                    x=np.tile[0,npix]
-                    #np.tile(x,npix)
-                    y=np.transpose(x)
-                    xdata= np.vstack((x.ravel(),y.ravel())) #rearranges the data from (x,y,z) to (x,y)
-                    zdata = pimg.ravel()
+                xarr=[0,npix]
+                x=np.tile(xarr,npix)
+                y=np.transpose(x)
+                xdata= np.vstack((x.ravel(),y.ravel())) #rearranges the data from (x,y,z) to (x,y)
+                zdata = pimg.ravel()
 #print(xdata)
 #print (zdata)
 
-                    popt,pcov=curve_fit(fitter,xdata,zdata,p0=initial_guess)
-                    model=fitter(xdata,popt)
+                popt,pcov=curve_fit(fitter,xdata,zdata,p0=initial_guess)
+                model=fitter(xdata,popt)
     return pimg
 
 ######only runs from python command line, not from import########                    
