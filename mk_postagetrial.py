@@ -135,7 +135,7 @@ def calc_slope(channel, col, row, source):
     d3 = np.array([])
 
 
-    ffilist = ['kplr2009114174833_ffi-cal.fits', #'kplr2009114204835_ffi-cal.fits', #'kplr2009115002613_ffi-cal.fits',
+    ffilist = ['kplr2009114174833_ffi-cal.fits'] #'kplr2009114204835_ffi-cal.fits', #'kplr2009115002613_ffi-cal.fits',
                #'kplr2009115053616_ffi-cal.fits', #'kplr2009115080620_ffi-cal.fits', #'kplr2009115131122_ffi-cal.fits',
                #'kplr2009115173611_ffi-cal.fits', #'kplr2009116035924_ffi-cal.fits', ##'kplr2009170043915_ffi-cal.fits',
                #'kplr2009231194831_ffi-cal.fits', #'kplr2009260000800_ffi-cal.fits', #'kplr2009292020429_ffi-cal.fits',
@@ -155,9 +155,9 @@ def calc_slope(channel, col, row, source):
                #'kplr2013065115251_ffi-cal.fits', #'kplr2013098115308_ffi-cal.fits']
 
 ######## Makes the plot look nice #####    
-    fig= plt.figure(figsize=(11,8))  #syntax error
+    fig= plt.figure(figsize=(11,8))  
     #ax1 = fig.add_subplot(2, 2, j+1)
-    ax1= plt.gca() #syntax error
+    ax1= plt.gca() 
 
     plt.gcf().subplots_adjust(bottom=0.17, wspace=0.0, top=0.86, right=0.94, left=0.16)
 
@@ -168,7 +168,7 @@ def calc_slope(channel, col, row, source):
 ##########################################
 
 #defines postage stamp#
-    if channel[3] in [49,50,51,52]: #syntax error
+    if channel[3] in [49,50,51,52]: 
         vals=[1,2,3,0]
     else:
         vals=[0,1,2,3]
@@ -234,11 +234,11 @@ def calc_slope(channel, col, row, source):
                         except:
                             rowd, cold, amp =findothersources(pimg, row[season] - ymin, col[season] - xmin) ##postitions of 10 brightest stars surrounding
 
-                     initial_guess=[amp,rowd,cold,5,3,np.pi/4]
+                    initial_guess=[amp,rowd,cold,5,3,np.pi/4]
                
 #optimal result, and covariance
-                    x=np.array[0,npix]
-                    np.tile(x,npix)
+                    x=np.tile[0,npix]
+                    #np.tile(x,npix)
                     y=np.transpose(x)
                     xdata= np.vstack((x.ravel(),y.ravel())) #rearranges the data from (x,y,z) to (x,y)
                     zdata = pimg.ravel()
