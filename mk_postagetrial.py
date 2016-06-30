@@ -32,7 +32,7 @@ offsets = np.array([0.001, 0.002, 0.0, 0.006])
 def findothersources(imgt, xtarg, ytarg):
     
     image = imgt + 0.0
-    sources = np.zeros((10, 2))
+    sources = np.zeros((10, 3)) #change dimensions
     counter = 0
     
     print(xtarg, ytarg)
@@ -64,7 +64,7 @@ def findothersources(imgt, xtarg, ytarg):
             else:
                 foundone = 1
         if image[j,i] > 5:
-            sources[peaks] = [j,i]
+            sources[peaks] = [j,i,image[j,i]] #include amplitude
             image[max(j-4, 0):min(j+5,sizeimg),max(i-4,0):min(i+5, sizeimg)] = 0.0
             #print sources[peaks]
             counter += 1
@@ -78,7 +78,7 @@ def findothersources(imgt, xtarg, ytarg):
     #plt.show()
     #print(sources)
     #print sources
-    return sources[0:counter,0], sources[0:counter, 1]
+    return sources[0:counter,0], sources[0:counter, 1],sources[0:counter,2] #return amp
 
 ############## Fitting Multiple Gausians ##############
 
@@ -117,16 +117,14 @@ def fitter(xdata_tuple,*params):
 
 #print(np.shape(x))
 
-initial_guess=[12,30,35,12,31,29,21,42,40,31,24,12,5,3,np.pi/4] #change initial guess 
-
 #optimal result-popt, and covariance-pcov
-xdata= np.vstack((x.ravel(),y.ravel())) #rearranges the data from (x,y,z) to (x,y)
-zdata = pimg.ravel()
+#xdata= np.vstack((x.ravel(),y.ravel())) #rearranges the data from (x,y,z) to (x,y)
+#zdata = pimg.ravel()
 #print(xdata)
 #print (zdata)
 
-popt,pcov=curve_fit(fitter,xdata,zdata,p0=initial_guess)
-model=fitter(xdata,popt)
+#popt,pcov=curve_fit(fitter,xdata,zdata,p0=initial_guess)
+#model=fitter(xdata,popt)
 
 ################ Photometry Section #######################
 def calc_slope(channel, col, row, source):
@@ -137,40 +135,40 @@ def calc_slope(channel, col, row, source):
     d3 = np.array([])
 
 
-    ffilist = ['kplr2009114174833_ffi-cal.fits', 'kplr2009114204835_ffi-cal.fits', 'kplr2009115002613_ffi-cal.fits',
-               'kplr2009115053616_ffi-cal.fits', 'kplr2009115080620_ffi-cal.fits', 'kplr2009115131122_ffi-cal.fits',
-               'kplr2009115173611_ffi-cal.fits', 'kplr2009116035924_ffi-cal.fits', #'kplr2009170043915_ffi-cal.fits',
-               'kplr2009231194831_ffi-cal.fits', 'kplr2009260000800_ffi-cal.fits', 'kplr2009292020429_ffi-cal.fits',
-               'kplr2009322233047_ffi-cal.fits', 'kplr2009351005245_ffi-cal.fits', 'kplr2010019225502_ffi-cal.fits',
-               'kplr2010020005046_ffi-cal.fits', 'kplr2010049182302_ffi-cal.fits', 'kplr2010078174524_ffi-cal.fits',
-               'kplr2010111125026_ffi-cal.fits', 'kplr2010140101631_ffi-cal.fits', 'kplr2010174164113_ffi-cal.fits', 
-               'kplr2010203012215_ffi-cal.fits', 'kplr2010234192745_ffi-cal.fits', 'kplr2010265195356_ffi-cal.fits',
-               'kplr2010296192119_ffi-cal.fits', 'kplr2010326181728_ffi-cal.fits', 'kplr2010356020128_ffi-cal.fits',
-               'kplr2011024134926_ffi-cal.fits', 'kplr2011053174401_ffi-cal.fits', 'kplr2011116104002_ffi-cal.fits',
-               'kplr2011145152723_ffi-cal.fits', 'kplr2011177110110_ffi-cal.fits', 'kplr2011208112727_ffi-cal.fits',
-               'kplr2011240181752_ffi-cal.fits', 'kplr2011271191331_ffi-cal.fits', 'kplr2011303191211_ffi-cal.fits',
-               'kplr2011334181008_ffi-cal.fits', 'kplr2012004204112_ffi-cal.fits', 'kplr2012032101442_ffi-cal.fits',
-               'kplr2012060123308_ffi-cal.fits', 'kplr2012088132324_ffi-cal.fits', 'kplr2012121122500_ffi-cal.fits',
-               'kplr2012151105138_ffi-cal.fits', 'kplr2012179140901_ffi-cal.fits', 'kplr2012211123923_ffi-cal.fits',
-               'kplr2012242195726_ffi-cal.fits', 'kplr2012277203051_ffi-cal.fits', 'kplr2012310200152_ffi-cal.fits',
-               'kplr2012341215621_ffi-cal.fits', 'kplr2013011160902_ffi-cal.fits', 'kplr2013038133130_ffi-cal.fits',
-               'kplr2013065115251_ffi-cal.fits', 'kplr2013098115308_ffi-cal.fits']
+    ffilist = ['kplr2009114174833_ffi-cal.fits', #'kplr2009114204835_ffi-cal.fits', #'kplr2009115002613_ffi-cal.fits',
+               #'kplr2009115053616_ffi-cal.fits', #'kplr2009115080620_ffi-cal.fits', #'kplr2009115131122_ffi-cal.fits',
+               #'kplr2009115173611_ffi-cal.fits', #'kplr2009116035924_ffi-cal.fits', ##'kplr2009170043915_ffi-cal.fits',
+               #'kplr2009231194831_ffi-cal.fits', #'kplr2009260000800_ffi-cal.fits', #'kplr2009292020429_ffi-cal.fits',
+               #'kplr2009322233047_ffi-cal.fits', #'kplr2009351005245_ffi-cal.fits', #'kplr2010019225502_ffi-cal.fits',
+               #'kplr2010020005046_ffi-cal.fits', #'kplr2010049182302_ffi-cal.fits', #'kplr2010078174524_ffi-cal.fits',
+               #'kplr2010111125026_ffi-cal.fits', #'kplr2010140101631_ffi-cal.fits', #'kplr2010174164113_ffi-cal.fits', 
+               #'kplr2010203012215_ffi-cal.fits', #'kplr2010234192745_ffi-cal.fits', #'kplr2010265195356_ffi-cal.fits',
+               #'kplr2010296192119_ffi-cal.fits', #'kplr2010326181728_ffi-cal.fits', #'kplr2010356020128_ffi-cal.fits',
+               #'kplr2011024134926_ffi-cal.fits', #'kplr2011053174401_ffi-cal.fits', #'kplr2011116104002_ffi-cal.fits',
+               #'kplr2011145152723_ffi-cal.fits', #'kplr2011177110110_ffi-cal.fits', #'kplr2011208112727_ffi-cal.fits',
+               #'kplr2011240181752_ffi-cal.fits', #'kplr2011271191331_ffi-cal.fits', #'kplr2011303191211_ffi-cal.fits',
+               #'kplr2011334181008_ffi-cal.fits', #'kplr2012004204112_ffi-cal.fits', #'kplr2012032101442_ffi-cal.fits',
+               #'kplr2012060123308_ffi-cal.fits', #'kplr2012088132324_ffi-cal.fits', #'kplr2012121122500_ffi-cal.fits',
+               #'kplr2012151105138_ffi-cal.fits', #'kplr2012179140901_ffi-cal.fits', #'kplr2012211123923_ffi-cal.fits',
+               #'kplr2012242195726_ffi-cal.fits', #'kplr2012277203051_ffi-cal.fits', #'kplr2012310200152_ffi-cal.fits',
+               #'kplr2012341215621_ffi-cal.fits', #'kplr2013011160902_ffi-cal.fits', #'kplr2013038133130_ffi-cal.fits',
+               #'kplr2013065115251_ffi-cal.fits', #'kplr2013098115308_ffi-cal.fits']
 
 ######## Makes the plot look nice #####    
-    fig = plt.figure(figsize=(11, 8)) 
+    fig= plt.figure(figsize(11,8))  #syntax error
     #ax1 = fig.add_subplot(2, 2, j+1)
-    ax1 = plt.gca()
+    ax1= plt.gca() #syntax error
 
     plt.gcf().subplots_adjust(bottom=0.17, wspace=0.0, top=0.86, right=0.94, left=0.16)
 
 
-    flag = 0
+    #flag = 0
 
-    slope = np.zeros(4)
+    #slope = np.zeros(4)
 ##########################################
 
 #defines postage stamp#
-    if channel[3]in[49,50,51,52]:
+    if channel[3] in [49,50,51,52]: #syntax error
         vals=[1,2,3,0]
     else:
         vals=[0,1,2,3]
@@ -234,9 +232,14 @@ def calc_slope(channel, col, row, source):
                         try: 
                             rowd
                         except:
-                            rowd, cold =findothersources(pimg, row[season] - ymin, col[season] - xmin) ##postitions of 10 brightest stars surrounding
-                        
+                            rowd, cold, amp =findothersources(pimg, row[season] - ymin, col[season] - xmin) ##postitions of 10 brightest stars surrounding
+
+                     initial_guess=[amp,rowd,cold,5,3,np.pi/4]
+               
 #optimal result, and covariance
+                    x=np.array[0,npix]
+                    np.tile(x,npix)
+                    y=np.transpose(x)
                     xdata= np.vstack((x.ravel(),y.ravel())) #rearranges the data from (x,y,z) to (x,y)
                     zdata = pimg.ravel()
 #print(xdata)
@@ -244,6 +247,7 @@ def calc_slope(channel, col, row, source):
 
                     popt,pcov=curve_fit(fitter,xdata,zdata,p0=initial_guess)
                     model=fitter(xdata,popt)
+    return pimg
 
 ######only runs from python command line, not from import########                    
 if __name__ == '__main__':
@@ -265,7 +269,26 @@ if __name__ == '__main__':
     #cold = np.array([-7, -10, 45, -33])
     #rowd = np.array([-22, 27, 21, 34])
 
-    calc_slope(channel, col, row, source)
+    pimg=calc_slope(channel, col, row, source)
+
+
+############## Plotting Section #####################3
+
+plt.subplot(2,2,2)
+b=plt.imshow(model.reshape(60,60))
+plt.colorbar(b)
+plt.subplot(2,2,1)
+a=plt.imshow(pimg,interpolation='nearest')
+plt.colorbar(a)
+plt.subplot(2,2,3)
+guess= fitter (xdata,initial_guess)
+c=plt.imshow(guess.reshape(60,60))
+plt.colorbar(c)
+plt.subplot(2,2,4)
+residuals= pimg-model.reshape(60,60)
+d=plt.imshow(residuals)
+plt.colorbar(d)
+plt.show()
 
 ##0.00546878979552
 ##0.00963833403853
