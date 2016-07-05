@@ -70,8 +70,8 @@ def findothersources(imgt, xtarg, ytarg):
             counter += 1
 
 
-    sources[:,0] -= xtarg
-    sources[:,1] -= ytarg
+    #sources[:,0] -= xtarg
+    #sources[:,1] -= ytarg
     
     #test = plt.imshow(image, interpolation='nearest', cmap='gray')
     #plt.colorbar(test)
@@ -95,7 +95,7 @@ def gaussian(xdata_tuple,*params):
     a = np.cos(theta)**2/(2*sigma_x**2) + np.sin(theta)**2/(2*sigma_y**2)
     b = -np.sin(2*theta)/(4*sigma_x**2) + np.sin(2*theta)/(4*sigma_y**2)
     c = np.sin(theta)**2/(2*sigma_x**2) + np.cos(theta)**2/(2*sigma_y**2)
-    
+    #print (amp,xc,yc,sigma_x,sigma_y,theta)
     return amp*np.exp( - (a*(x-xc)**2 - 2*b*(x-xc)*(y-yc) + c*(y-yc)**2))
 
 def fitter(xdata_tuple,*params):
@@ -108,11 +108,9 @@ def fitter(xdata_tuple,*params):
     sum= np.zeros_like(x)                   
     for A in range(N):                                
         specifics= params[-3:] + params[A:3*N:N]      #change parameters to be based on initial guess
-        #print (specifics)
 #gives the specific parameters we will be using, we always want 3 times(amp,x,y positions) the number of gaussians + the 3 fixed params (sigma_x,sigma_y, theta)
         one = gaussian(xdata_tuple, specifics)
         sum = sum + one                                #Adds up the gaussians
-    #print (np.sum(sum))
     return sum
 
 #print(np.shape(x))
@@ -165,9 +163,9 @@ def calc_slope(channel, col, row, source):
     flag = 0
 
     slope = np.zeros(4)
-##########################################
 
-#defines postage stamp#
+
+#########defines postage stamp###########
     if channel[3] in [49,50,51,52]:
         vals=[1,2,3,0]
     else:
@@ -181,7 +179,7 @@ def calc_slope(channel, col, row, source):
         counter = 0
         d0 = np.array([])
 
-#####opens fits files one at a time#####
+#######opens fits files one at a time########
         #ax2 = ax1.twiny()
         for icount, i in enumerate(ffilist):     
             a = p.open(i)
@@ -198,24 +196,43 @@ def calc_slope(channel, col, row, source):
 
                 img = a[channel[season]].data 
               
-
-
                 img -= np.median(img)
                 #print img.shape
                 npix = 120
                 aper = 11
-                ymin = int(max([int(row[season])-npix/2,0]))
-                ymax = int(min([int(row[season])+npix/2+1,img.shape[0]]))
-                xmin = int(max([int(col[season])-npix/2,0]))
-                xmax = int(min([int(col[season])+npix/2+1,img.shape[1]]))
+                #ymin = int(max([int(row[season])-npix/2,0]))
+                #ymax = int(min([int(row[season])+npix/2,img.shape[0]]))
+                #xmin = int(max([int(col[season])-npix/2,0]))
+                #xmax = int(min([int(col[season])+npix/2,img.shape[1]]))
+
+                ymin = int(row[season]) - npix/2
+                ymax = int(row[season]) + npix/2
+
+                xmin = int(col[season]) - npix/2
+                xmax = int(col[season]) + npix/2
+
+                if ymin < 0:
+                    ymin = 0
+                    ymax = npix
+                elif ymax > img.shape[0]:
+                    ymax = img.shape[0]
+                    ymin = img.shape[0] - npix
+
+                if xmin < 0:
+                    xmin = 0
+                    xmax = npix
+                elif xmax > img.shape[1]:
+                    xmax = img.shape[1]
+                    xmin = img.shape[1] - npix
+                    
 
                 ymin2 = int(max([int(row[season])-aper/2,0]))
-                ymax2 = int(min([int(row[season])+aper/2+1,img.shape[0]]))
+                ymax2 = int(min([int(row[season])+aper/2,img.shape[0]]))
                 xmin2 = int(max([int(col[season])-aper/2,0]))
-                xmax2 = int(min([int(col[season])+aper/2+1,img.shape[1]]))
-#########
-                pimg = img[ymin:ymax,xmin:xmax] ####chunk around the star we care about#
+                xmax2 = int(min([int(col[season])+aper/2,img.shape[1]]))
                 
+                pimg = img[ymin:ymax,xmin:xmax] ####chunk around the star we care      
+               # print(np.shape(pimg))          
                 
                 if np.max(pimg) > -1005:
                 
@@ -234,19 +251,36 @@ def calc_slope(channel, col, row, source):
                         except:
                             rowd, cold, amp =findothersources(pimg, row[season] - ymin, col[season] - xmin) ##postitions of 10 brightest stars surrounding
 
-                    initial_guess=[amp,rowd,cold,5,3,np.pi/4]
+                    initial_guess=np.concatenate((amp,rowd,cold,[5,3,np.pi/4]))
+                    #print (initial_guess)
                
-#optimal result, and covariance
-                xarr=[0,npix]
-                x=np.tile(xarr,npix)
+                xlist=list(range(0,npix))
+                x=np.tile(xlist,npix).reshape((npix,npix))
                 y=np.transpose(x)
+                #print (np.shape(x))
                 xdata= np.vstack((x.ravel(),y.ravel())) #rearranges the data from (x,y,z) to (x,y)
                 zdata = pimg.ravel()
-#print(xdata)
-#print (zdata)
+                #print (np.shape(xdata))
+                #print (len(zdata))
 
-                popt,pcov=curve_fit(fitter,xdata,zdata,p0=initial_guess)
+                popt,pcov=curve_fit(fitter,xdata,zdata,p0=initial_guess) #optimal result,covarience
                 model=fitter(xdata,popt)
+######### Plotting Section ################                
+    plt.subplot(2,2,2)
+    b=plt.imshow(model.reshape(120,120))
+    plt.colorbar(b)
+    plt.subplot(2,2,1)
+    a=plt.imshow(pimg,interpolation='nearest',vmax=np.percentile(pimg,99))
+    plt.colorbar(a)
+    plt.subplot(2,2,3)
+    guess= fitter (xdata,initial_guess)
+    c=plt.imshow(guess.reshape(120,120))
+    plt.colorbar(c)
+    plt.subplot(2,2,4)
+    residuals= pimg-model.reshape(120,120)
+    d=plt.imshow(residuals,vmax=np.percentile(pimg,99))
+    plt.colorbar(d)
+    plt.show()
     return pimg
 
 ######only runs from python command line, not from import########                    
@@ -269,26 +303,4 @@ if __name__ == '__main__':
     #cold = np.array([-7, -10, 45, -33])
     #rowd = np.array([-22, 27, 21, 34])
 
-    pimg=calc_slope(channel, col, row, source)
-
-
-############## Plotting Section #####################3
-
-plt.subplot(2,2,2)
-b=plt.imshow(model.reshape(60,60))
-plt.colorbar(b)
-plt.subplot(2,2,1)
-a=plt.imshow(pimg,interpolation='nearest')
-plt.colorbar(a)
-plt.subplot(2,2,3)
-guess= fitter (xdata,initial_guess)
-c=plt.imshow(guess.reshape(60,60))
-plt.colorbar(c)
-plt.subplot(2,2,4)
-residuals= pimg-model.reshape(60,60)
-d=plt.imshow(residuals)
-plt.colorbar(d)
-plt.show()
-
-##0.00546878979552
-##0.00963833403853
+    pimg=calc_slope(channel, col, row, source) 
