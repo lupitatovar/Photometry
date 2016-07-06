@@ -32,9 +32,9 @@ offsets = np.array([0.001, 0.002, 0.0, 0.006])
 def findothersources(imgt, xtarg, ytarg):
     
     image = imgt + 0.0
-    sources = np.zeros((10, 3)) #change dimensions
+    sources = np.zeros((50, 3)) #change dimensions
     counter = 0
-    
+
     print(xtarg, ytarg)
 
     sizeimg = np.shape(imgt)[0]-1
@@ -44,28 +44,22 @@ def findothersources(imgt, xtarg, ytarg):
     
     #image /= np.std(image)
     
-    fig2=plt.figure(2)
-    ax=fig2.add_subplot(111)
-    
-    bb = ax.imshow(image, interpolation='nearest', cmap='gray', vmax = np.percentile(image, 99))
-    fig2.colorbar(bb)
-    fig2.show()
 
-    image[ytarg-4:ytarg+5,xtarg-4:xtarg+5] = 0
+    #image[ytarg-4:ytarg+5,xtarg-4:xtarg+5] = 0
     
-    for peaks in range(10):   #will change the number of stars boxed
+    for peaks in range(50):   #will change the number of stars boxed
     
         foundone = 0
         while foundone == 0:
             k = np.argmax(image)
             j,i = np.unravel_index(k, image.shape)
             if image[j,i] > 175000.9:
-                image[max(j-4, 0):min(j+5,sizeimg),max(i-4,0):min(i+5, sizeimg)] = 0.0
+                image[max(j-4, 0):min(j+5,sizeimg+1),max(i-4,0):min(i+5, sizeimg+1)] = 0.0
             else:
                 foundone = 1
-        if image[j,i] > 5:
+        if image[j,i] > 300:
             sources[peaks] = [j,i,image[j,i]] #include amplitude
-            image[max(j-4, 0):min(j+5,sizeimg),max(i-4,0):min(i+5, sizeimg)] = 0.0
+            image[max(j-4, 0):min(j+5,sizeimg+1),max(i-4,0):min(i+5, sizeimg+1)] = 0.0
             #print sources[peaks]
             counter += 1
 
@@ -107,22 +101,13 @@ def fitter(xdata_tuple,*params):
     N=int((len(params)-3)/3)
     sum= np.zeros_like(x)                   
     for A in range(N):                                
-        specifics= params[-3:] + params[A:3*N:N]      #change parameters to be based on initial guess
+        specifics= params[-3:] + params[A:3*N:N]      
 #gives the specific parameters we will be using, we always want 3 times(amp,x,y positions) the number of gaussians + the 3 fixed params (sigma_x,sigma_y, theta)
         one = gaussian(xdata_tuple, specifics)
+        #two= gaussian(xdata_tuple)                   #call new specifics based on new changes
+        #three = gaussian(xdata_tuple)              
         sum = sum + one                                #Adds up the gaussians
     return sum
-
-#print(np.shape(x))
-
-#optimal result-popt, and covariance-pcov
-#xdata= np.vstack((x.ravel(),y.ravel())) #rearranges the data from (x,y,z) to (x,y)
-#zdata = pimg.ravel()
-#print(xdata)
-#print (zdata)
-
-#popt,pcov=curve_fit(fitter,xdata,zdata,p0=initial_guess)
-#model=fitter(xdata,popt)
 
 ################ Photometry Section #######################
 def calc_slope(channel, col, row, source):
@@ -152,7 +137,8 @@ def calc_slope(channel, col, row, source):
                #'kplr2012341215621_ffi-cal.fits', #'kplr2013011160902_ffi-cal.fits', #'kplr2013038133130_ffi-cal.fits',
                #'kplr2013065115251_ffi-cal.fits', #'kplr2013098115308_ffi-cal.fits']
 
-######## Makes the plot look nice ##############    
+######## Makes the plot look nice ##############
+
     plt.figure(figsize=(11,8)) 
     #ax1 = fig.add_subplot(2, 2, j+1)
     ax1 = plt.gca() 
@@ -166,6 +152,7 @@ def calc_slope(channel, col, row, source):
 
 
 #########defines postage stamp###########
+
     if channel[3] in [49,50,51,52]:
         vals=[1,2,3,0]
     else:
@@ -198,7 +185,7 @@ def calc_slope(channel, col, row, source):
               
                 img -= np.median(img)
                 #print img.shape
-                npix = 120
+                npix = 100
                 aper = 11
                 #ymin = int(max([int(row[season])-npix/2,0]))
                 #ymax = int(min([int(row[season])+npix/2,img.shape[0]]))
@@ -251,12 +238,12 @@ def calc_slope(channel, col, row, source):
                         except:
                             rowd, cold, amp =findothersources(pimg, row[season] - ymin, col[season] - xmin) ##postitions of 10 brightest stars surrounding
 
-                    initial_guess=np.concatenate((amp,rowd,cold,[5,3,np.pi/4]))
-                    #print (initial_guess)
+                    initial_guess=np.concatenate((amp,rowd,cold,[2,3,np.pi/4]))
+                    print (initial_guess)
                
                 xlist=list(range(0,npix))
-                x=np.tile(xlist,npix).reshape((npix,npix))
-                y=np.transpose(x)
+                y=np.tile(xlist,npix).reshape((npix,npix))
+                x=np.transpose(y)
                 #print (np.shape(x))
                 xdata= np.vstack((x.ravel(),y.ravel())) #rearranges the data from (x,y,z) to (x,y)
                 zdata = pimg.ravel()
@@ -267,17 +254,17 @@ def calc_slope(channel, col, row, source):
                 model=fitter(xdata,popt)
 ######### Plotting Section ################                
     plt.subplot(2,2,2)
-    b=plt.imshow(model.reshape(120,120))
+    b=plt.imshow(model.reshape(npix,npix),vmax=np.percentile(pimg,99))
     plt.colorbar(b)
     plt.subplot(2,2,1)
     a=plt.imshow(pimg,interpolation='nearest',vmax=np.percentile(pimg,99))
     plt.colorbar(a)
     plt.subplot(2,2,3)
     guess= fitter (xdata,initial_guess)
-    c=plt.imshow(guess.reshape(120,120))
+    c=plt.imshow(guess.reshape(npix,npix))
     plt.colorbar(c)
     plt.subplot(2,2,4)
-    residuals= pimg-model.reshape(120,120)
+    residuals= pimg-model.reshape(npix,npix)
     d=plt.imshow(residuals,vmax=np.percentile(pimg,99))
     plt.colorbar(d)
     plt.show()
