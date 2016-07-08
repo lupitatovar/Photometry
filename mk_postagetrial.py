@@ -27,12 +27,11 @@ offsets = np.array([0.001, 0.002, 0.0, 0.006])
 
 #plt.gcf().subplots_adjust(bottom=0.17, wspace=0.0, top=0.92, right=0.95, left=0.16)
 
-#incorporate the amplitdue into findothersources, import fitter after that function
 
 def findothersources(imgt, xtarg, ytarg):
     
     image = imgt + 0.0
-    sources = np.zeros((50, 3)) #change dimensions
+    sources = np.zeros((50, 3)) 
     counter = 0
 
     print(xtarg, ytarg)
@@ -47,7 +46,7 @@ def findothersources(imgt, xtarg, ytarg):
 
     #image[ytarg-4:ytarg+5,xtarg-4:xtarg+5] = 0
     
-    for peaks in range(50):   #will change the number of stars boxed
+    for peaks in range(50):   #changes the number of stars boxed
     
         foundone = 0
         while foundone == 0:
@@ -58,7 +57,7 @@ def findothersources(imgt, xtarg, ytarg):
             else:
                 foundone = 1
         if image[j,i] > 300:
-            sources[peaks] = [j,i,image[j,i]] #include amplitude
+            sources[peaks] = [j,i,image[j,i]]
             image[max(j-4, 0):min(j+5,sizeimg+1),max(i-4,0):min(i+5, sizeimg+1)] = 0.0
             #print sources[peaks]
             counter += 1
@@ -74,7 +73,61 @@ def findothersources(imgt, xtarg, ytarg):
     #print sources
     return sources[0:counter,0], sources[0:counter, 1],sources[0:counter,2] #return amp
 
-############## Fitting Multiple Gausians ##############
+###############################################################################################
+################################# Parameters' Class  ##########################################
+###############################################################################################
+
+  
+class Parameters (object):
+
+    def calc_gaussian(self,xdata_tuple,ngaussian):
+         a = np.cos(self.theta)**2/(2*self.sigma_x**2) + np.sin(self.theta)**2/(2*self.sigma_y**2)
+         b = -np.sin(2*self.theta)/(4*self.sigma_x**2) + np.sin(2*self.theta)/(4*self.sigma_y**2)
+         c = np.sin(self.theta)**2/(2*self.sigma_x**2) + np.cos(self.theta)**2/(2*self.sigma_y**2)
+         t= self.amp*np.exp( - (a*(x-self.xc)**2 - 2*b*(x-self.xc)*(y-self.yc) + c*(y-self.yc)**2))
+
+         if ngaussian > 1:
+             a = np.cos(self.theta2)**2/(2*self.sigma_x2**2) + np.sin(self.theta2)**2/(2*self.sigma_y2**2)
+             b = -np.sin(2*self.theta2)/(4*self.sigma_x2**2) + np.sin(2*self.theta2)/(4*self.sigma_y2**2)
+             c = np.sin(self.theta2)**2/(2*self.sigma_x2**2) + np.cos(self.theta2)**2/(2*self.sigma_y2**2)
+             t+= self.amp2*np.exp( -(a*(x-self.xc2)**2 - 2*b*(x-self.xc2)*(y-self.yc2) + c*(y-self.yc2)**2))
+             
+         if ngaussian > 2:
+             a = np.cos(self.theta3)**2/(2*self.sigma_x3**2) + np.sin(self.theta3)**2/(2*self.sigma_y3**2)
+             b = -np.sin(2*self.theta3)/(4*self.sigma_x3**2) + np.sin(2*self.theta3)/(4*self.sigma_y3**2)
+             c = np.sin(self.theta3)**2/(2*self.sigma_x3**2) + np.cos(self.theta3)**2/(2*self.sigma_y3**2)
+             t+= self.amp3*np.exp( - (a*(x-self.xc3)**2 - 2*b*(x-self.xc3)*(y-self.yc3) + c*(y-self.yc3)**2))
+
+         return t   
+
+    def gaussian1 (self, amp, xc,yc,sigma_x,sigma_y,theta):
+        self.amp=amp
+        self.xc=xc
+        self.yc=yc
+        self.sigma_x= sigma_x
+        self.sigma_y= sigma_y
+        self.theta= theta
+
+    def gaussian2 (self,f):
+        self.amp2 = f[0]*self.amp
+        self.xc2 = f[1]*self.xc
+        self.yc2 = f[2]*self.yc
+        self.sigma_x2 = f[3]
+        self.sigma_y2 = f[4]
+        self.theta2 =  f[5]
+
+
+    def gaussian3 (self,f):
+        self.amp3 = f[0]*self.amp
+        self.xc3 = f[1]*self.xc
+        self.yc3 = f[2]*self.yc
+        self.sigma_x3 = f[3]
+        self.sigma_y3 = f[4]
+        self.theta3 = f[5]
+
+########################################################################################
+############################### Fitting Multiple Gausians ##############################
+########################################################################################
 
 def gaussian(xdata_tuple,*params):
     (x,y) = xdata_tuple
@@ -99,17 +152,27 @@ def fitter(xdata_tuple,*params):
     params=list(params)
     #print (params)
     N=int((len(params)-3)/3)
-    sum= np.zeros_like(x)                   
+    sum= np.zeros_like(x)
     for A in range(N):                                
-        specifics= params[-3:] + params[A:3*N:N]      
+        specifics= params[-3:] + params[A:3*N:N]
 #gives the specific parameters we will be using, we always want 3 times(amp,x,y positions) the number of gaussians + the 3 fixed params (sigma_x,sigma_y, theta)
-        one = gaussian(xdata_tuple, specifics)
-        #two= gaussian(xdata_tuple)                   #call new specifics based on new changes
-        #three = gaussian(xdata_tuple)              
-        sum = sum + one                                #Adds up the gaussians
+
+        g1= Parameters() #call first gaussian function from parameters class to define g1
+        g1.gaussian1(amp,xc,yc,sigma_x,sigma_y,theta) 
+       #g2= self.gaussian2(5,3,5,2,3,np.pi/4)
+       #g3= self.gaussian3()
+
+        one = g1.calc_gaussian(xdata_tuple,1)
+        #two= g2.calc_gaussian(xdata_tuple,2)                  
+        #three = g3.calc_gaussian(xdata_tuple,3)              
+        sum = sum + one                               #Adds up the gaussians
     return sum
 
-################ Photometry Section #######################
+
+####################################################################################################
+###################################### Photometry Section ##########################################
+####################################################################################################
+
 def calc_slope(channel, col, row, source):
 
     d0 = np.array([])
@@ -137,7 +200,8 @@ def calc_slope(channel, col, row, source):
                #'kplr2012341215621_ffi-cal.fits', #'kplr2013011160902_ffi-cal.fits', #'kplr2013038133130_ffi-cal.fits',
                #'kplr2013065115251_ffi-cal.fits', #'kplr2013098115308_ffi-cal.fits']
 
-######## Makes the plot look nice ##############
+
+###### Makes the plot look nice #######
 
     plt.figure(figsize=(11,8)) 
     #ax1 = fig.add_subplot(2, 2, j+1)
@@ -150,8 +214,9 @@ def calc_slope(channel, col, row, source):
 
     slope = np.zeros(4)
 
-
-#########defines postage stamp###########
+####################################################################################################################
+####################################### Defining the  Postage Stamp ################################################
+####################################################################################################################
 
     if channel[3] in [49,50,51,52]:
         vals=[1,2,3,0]
@@ -167,6 +232,7 @@ def calc_slope(channel, col, row, source):
         d0 = np.array([])
 
 #######opens fits files one at a time########
+
         #ax2 = ax1.twiny()
         for icount, i in enumerate(ffilist):     
             a = p.open(i)
@@ -178,7 +244,8 @@ def calc_slope(channel, col, row, source):
             else:
                 season = (int(quarter) - 2) % 4
 
-########## selects pixels we care about #########
+######### selects pixels we care about #########
+
             if season == j:
 
                 img = a[channel[season]].data 
@@ -218,7 +285,7 @@ def calc_slope(channel, col, row, source):
                 xmin2 = int(max([int(col[season])-aper/2,0]))
                 xmax2 = int(min([int(col[season])+aper/2,img.shape[1]]))
                 
-                pimg = img[ymin:ymax,xmin:xmax] ####chunk around the star we care      
+                pimg = img[ymin:ymax,xmin:xmax] ###chunk around the star we care about    
                # print(np.shape(pimg))          
                 
                 if np.max(pimg) > -1005:
@@ -239,7 +306,7 @@ def calc_slope(channel, col, row, source):
                             rowd, cold, amp =findothersources(pimg, row[season] - ymin, col[season] - xmin) ##postitions of 10 brightest stars surrounding
 
                     initial_guess=np.concatenate((amp,rowd,cold,[2,3,np.pi/4]))
-                    print (initial_guess)
+                    #print (initial_guess)
                
                 xlist=list(range(0,npix))
                 y=np.tile(xlist,npix).reshape((npix,npix))
@@ -252,21 +319,29 @@ def calc_slope(channel, col, row, source):
 
                 popt,pcov=curve_fit(fitter,xdata,zdata,p0=initial_guess) #optimal result,covarience
                 model=fitter(xdata,popt)
-######### Plotting Section ################                
+                
+########################################################################################################                
+####################################### Plotting Section ###############################################
+########################################################################################################
+
     plt.subplot(2,2,2)
     b=plt.imshow(model.reshape(npix,npix),vmax=np.percentile(pimg,99))
     plt.colorbar(b)
+    plt.title('Gaussian Model')
     plt.subplot(2,2,1)
     a=plt.imshow(pimg,interpolation='nearest',vmax=np.percentile(pimg,99))
     plt.colorbar(a)
+    plt.title('Raw Data')
     plt.subplot(2,2,3)
     guess= fitter (xdata,initial_guess)
     c=plt.imshow(guess.reshape(npix,npix))
     plt.colorbar(c)
+    plt.title('Initial Guess')
     plt.subplot(2,2,4)
     residuals= pimg-model.reshape(npix,npix)
     d=plt.imshow(residuals,vmax=np.percentile(pimg,99))
     plt.colorbar(d)
+    plt.title('Residuals')
     plt.show()
     return pimg
 
