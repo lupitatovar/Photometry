@@ -81,6 +81,7 @@ def findothersources(imgt, xtarg, ytarg):
 class Parameters (object):
 
     def calc_gaussian(self,xdata_tuple,ngaussian):
+         (x,y)=xdata_tuple
          a = np.cos(self.theta)**2/(2*self.sigma_x**2) + np.sin(self.theta)**2/(2*self.sigma_y**2)
          b = -np.sin(2*self.theta)/(4*self.sigma_x**2) + np.sin(2*self.theta)/(4*self.sigma_y**2)
          c = np.sin(self.theta)**2/(2*self.sigma_x**2) + np.cos(self.theta)**2/(2*self.sigma_y**2)
@@ -100,7 +101,8 @@ class Parameters (object):
 
          return t   
 
-    def gaussian1 (self, amp, xc,yc,sigma_x,sigma_y,theta):
+    def gaussian1 (self,f):
+        (sigma_x,sigma_y,theta,amp,xc,yc)=f
         self.amp=amp
         self.xc=xc
         self.yc=yc
@@ -155,17 +157,23 @@ def fitter(xdata_tuple,*params):
     sum= np.zeros_like(x)
     for A in range(N):                                
         specifics= params[-3:] + params[A:3*N:N]
+        specifics2=
+        specifics3=
 #gives the specific parameters we will be using, we always want 3 times(amp,x,y positions) the number of gaussians + the 3 fixed params (sigma_x,sigma_y, theta)
 
-        g1= Parameters() #call first gaussian function from parameters class to define g1
-        g1.gaussian1(amp,xc,yc,sigma_x,sigma_y,theta) 
+        pclass= Parameters() #call first gaussian function from parameters class to define g1
+        pclass.gaussian1(specifics)
+        pclass.gaussian2(specifics2)
+        pclass.gaussian3(specifics3)
+        #print (specifics)
        #g2= self.gaussian2(5,3,5,2,3,np.pi/4)
        #g3= self.gaussian3()
 
         one = g1.calc_gaussian(xdata_tuple,1)
-        #two= g2.calc_gaussian(xdata_tuple,2)                  
-        #three = g3.calc_gaussian(xdata_tuple,3)              
-        sum = sum + one                               #Adds up the gaussians
+        #print (np.sum(one))
+        two= g2.calc_gaussian(xdata_tuple,2)                  
+        three = g3.calc_gaussian(xdata_tuple,3)              
+        sum = sum + one + two + three                             #Adds up the gaussians
     return sum
 
 
