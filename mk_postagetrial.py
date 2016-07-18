@@ -24,7 +24,6 @@ fmt = ['ko', 'rD', 'b^', 'gs']
 offsets = np.array([0.001, 0.002, 0.0, 0.006])
 
 
-
 #plt.gcf().subplots_adjust(bottom=0.17, wspace=0.0, top=0.92, right=0.95, left=0.16)
 
 
@@ -112,8 +111,8 @@ class Parameters (object):
 
     def gaussian2 (self,f):
         self.amp2 = f[0]*self.amp
-        self.xc2 = f[1]*self.xc
-        self.yc2 = f[2]*self.yc
+        self.xc2 = f[1]+self.xc
+        self.yc2 = f[2]+self.yc
         self.sigma_x2 = f[3]
         self.sigma_y2 = f[4]
         self.theta2 =  f[5]
@@ -121,8 +120,8 @@ class Parameters (object):
 
     def gaussian3 (self,f):
         self.amp3 = f[0]*self.amp
-        self.xc3 = f[1]*self.xc
-        self.yc3 = f[2]*self.yc
+        self.xc3 = f[1]+self.xc
+        self.yc3 = f[2]+self.yc
         self.sigma_x3 = f[3]
         self.sigma_y3 = f[4]
         self.theta3 = f[5]
@@ -131,7 +130,7 @@ class Parameters (object):
 ############################### Fitting Multiple Gausians ##############################
 ########################################################################################
 
-def gaussian(xdata_tuple,*params):
+def gaussian(xdata_tuple,N,*params):
     (x,y) = xdata_tuple
     params=list(params[0])
     #print (params)
@@ -148,37 +147,35 @@ def gaussian(xdata_tuple,*params):
     return amp*np.exp( - (a*(x-xc)**2 - 2*b*(x-xc)*(y-yc) + c*(y-yc)**2))
 
 def fitter(xdata_tuple,*params):
+    NG=2 #number of gaussians we are fitting
     (x,y)= xdata_tuple
     if len(params) == 1:
         params=list(params[0])
     params=list(params)
+    
     #print (params)
-    N=int((len(params)-3)/3)
+    N=int((len(params)-3-(6(NG-1)))/3)  #number of stars we are fitting, inverts (amp,rowd,cold )
+    print(N)
     sum= np.zeros_like(x)
     for A in range(N):                                
-        specifics= params[-3:] + params[A:3*N:N]
-        specifics2=
-        specifics3=
+
+        specifics= params[3:6] + params[A:3*N:N] #change this it will not be the last -3 it will be the 3 before the last 6
+        
 #gives the specific parameters we will be using, we always want 3 times(amp,x,y positions) the number of gaussians + the 3 fixed params (sigma_x,sigma_y, theta)
-
+        #f=[0.5,1,2]
         pclass= Parameters() #call first gaussian function from parameters class to define g1
-        pclass.gaussian1(specifics)
-        pclass.gaussian2(specifics2)
-        pclass.gaussian3(specifics3)
-        #print (specifics)
-       #g2= self.gaussian2(5,3,5,2,3,np.pi/4)
-       #g3= self.gaussian3()
+        g= pclass.gaussian1(specifics)
+        g=pclass.gaussian2(params [-6:] + params [A:3*N:N]) #call last 6 in params
+        #g=pclass.gaussian3(#once this one is called it will need the last 6 params, meaning g2 will need the 6 before the 6)
+        print (specifics)
 
-        one = g1.calc_gaussian(xdata_tuple,1)
-        #print (np.sum(one))
-        two= g2.calc_gaussian(xdata_tuple,2)                  
-        three = g3.calc_gaussian(xdata_tuple,3)              
-        sum = sum + one + two + three                             #Adds up the gaussians
-    return sum
+        calcgauss = pclass.calc_gaussian(xdata_tuple,2)
+            
+    return calcgauss
 
 
 ####################################################################################################
-###################################### Photometry Section ##########################################
+###################################### Photometry Section (2) ##########################################
 ####################################################################################################
 
 def calc_slope(channel, col, row, source):
@@ -293,7 +290,7 @@ def calc_slope(channel, col, row, source):
                 xmin2 = int(max([int(col[season])-aper/2,0]))
                 xmax2 = int(min([int(col[season])+aper/2,img.shape[1]]))
                 
-                pimg = img[ymin:ymax,xmin:xmax] ###chunk around the star we care about    
+                pimg = img[ymin:ymax,xmin:xmax] ###big chunk around the star we care about, the large box not the little boxes    
                # print(np.shape(pimg))          
                 
                 if np.max(pimg) > -1005:
@@ -312,10 +309,14 @@ def calc_slope(channel, col, row, source):
                             rowd
                         except:
                             rowd, cold, amp =findothersources(pimg, row[season] - ymin, col[season] - xmin) ##postitions of 10 brightest stars surrounding
+                            print (rowd,cold,amp)
 
-                    initial_guess=np.concatenate((amp,rowd,cold,[2,3,np.pi/4]))
-                    #print (initial_guess)
-               
+                    initial_guess=np.concatenate((amp,rowd,cold,[2,3,np.pi/4],3000,50,60,3,3,np.pi/4)
+
+
+#we need 6(NG-1) but they need to be actual numbers in order (rel.amp,xoffset,yoffset,sigx,sigy,theta)
+                        
+                #print (initial_guess)               
                 xlist=list(range(0,npix))
                 y=np.tile(xlist,npix).reshape((npix,npix))
                 x=np.transpose(y)
@@ -326,6 +327,7 @@ def calc_slope(channel, col, row, source):
                 #print (len(zdata))
 
                 popt,pcov=curve_fit(fitter,xdata,zdata,p0=initial_guess) #optimal result,covarience
+                print (popt)
                 model=fitter(xdata,popt)
                 
 ########################################################################################################                
@@ -353,7 +355,7 @@ def calc_slope(channel, col, row, source):
     plt.show()
     return pimg
 
-######only runs from python command line, not from import########                    
+######only runs from python command line, not from import########  start point 1                  
 if __name__ == '__main__':
 
     source = 3629717
