@@ -154,20 +154,20 @@ def fitter(xdata_tuple,*params):
     params=list(params)
     
     #print (params)
-    N=int((len(params)-3-(6(NG-1)))/3)  #number of stars we are fitting, inverts (amp,rowd,cold )
-    print(N)
+    N=int((len(params)-3-(6*(NG-1)))/3)  #number of stars we are fitting, inverts (amp,rowd,cold )
+    #print(N)
     sum= np.zeros_like(x)
     for A in range(N):                                
 
-        specifics= params[3:6] + params[A:3*N:N] #change this it will not be the last -3 it will be the 3 before the last 6
+        specifics= params[3*N:(3*N)+3] + params[A:3*N:N] #change this it will not be the last -3 it will be the 3 before the last 6
         
 #gives the specific parameters we will be using, we always want 3 times(amp,x,y positions) the number of gaussians + the 3 fixed params (sigma_x,sigma_y, theta)
         #f=[0.5,1,2]
         pclass= Parameters() #call first gaussian function from parameters class to define g1
         g= pclass.gaussian1(specifics)
-        g=pclass.gaussian2(params [-6:] + params [A:3*N:N]) #call last 6 in params
+        g=pclass.gaussian2(params [-6:]) #call last 6 in params
         #g=pclass.gaussian3(#once this one is called it will need the last 6 params, meaning g2 will need the 6 before the 6)
-        print (specifics)
+        #print (specifics)
 
         calcgauss = pclass.calc_gaussian(xdata_tuple,2)
             
@@ -309,10 +309,10 @@ def calc_slope(channel, col, row, source):
                             rowd
                         except:
                             rowd, cold, amp =findothersources(pimg, row[season] - ymin, col[season] - xmin) ##postitions of 10 brightest stars surrounding
-                            print (rowd,cold,amp)
+                            #print (rowd,cold,amp)
 
-                    initial_guess=np.concatenate((amp,rowd,cold,[2,3,np.pi/4],3000,50,60,3,3,np.pi/4)
-
+                    initial_guess=np.concatenate((amp,rowd,cold,[2,3,np.pi/4],[0.5,2,2,2,3,np.pi/4]))
+                    #print (initial_guess)
 
 #we need 6(NG-1) but they need to be actual numbers in order (rel.amp,xoffset,yoffset,sigx,sigy,theta)
                         
@@ -326,7 +326,8 @@ def calc_slope(channel, col, row, source):
                 #print (np.shape(xdata))
                 #print (len(zdata))
 
-                popt,pcov=curve_fit(fitter,xdata,zdata,p0=initial_guess) #optimal result,covarience
+                popt,pcov=curve_fit(fitter,xdata,zdata,p0=initial_guess)
+#optimal result,covarience  -> (matrix that tells you how much changing one guess affects the rest), if you take the square root you get the error bars
                 print (popt)
                 model=fitter(xdata,popt)
                 
