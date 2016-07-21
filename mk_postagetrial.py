@@ -30,7 +30,7 @@ offsets = np.array([0.001, 0.002, 0.0, 0.006])
 def findothersources(imgt, xtarg, ytarg):
     
     image = imgt + 0.0
-    sources = np.zeros((50, 3)) 
+    sources = np.zeros((35, 3)) 
     counter = 0
 
     print(xtarg, ytarg)
@@ -45,7 +45,7 @@ def findothersources(imgt, xtarg, ytarg):
 
     #image[ytarg-4:ytarg+5,xtarg-4:xtarg+5] = 0
     
-    for peaks in range(50):   #changes the number of stars boxed
+    for peaks in range(35):   #changes the number of stars boxed
     
         foundone = 0
         while foundone == 0:
@@ -147,7 +147,7 @@ def gaussian(xdata_tuple,N,*params):
     return amp*np.exp( - (a*(x-xc)**2 - 2*b*(x-xc)*(y-yc) + c*(y-yc)**2))
 
 def fitter(xdata_tuple,*params):
-    NG=2 #number of gaussians we are fitting
+    NG=3 #number of gaussians we are fitting
     (x,y)= xdata_tuple
     if len(params) == 1:
         params=list(params[0])
@@ -162,16 +162,20 @@ def fitter(xdata_tuple,*params):
         specifics= params[3*N:(3*N)+3] + params[A:3*N:N] #change this it will not be the last -3 it will be the 3 before the last 6
         
 #gives the specific parameters we will be using, we always want 3 times(amp,x,y positions) the number of gaussians + the 3 fixed params (sigma_x,sigma_y, theta)
-        #f=[0.5,1,2]
+
         pclass= Parameters() #call first gaussian function from parameters class to define g1
         g= pclass.gaussian1(specifics)
-        g=pclass.gaussian2(params [-6:]) #call last 6 in params
-        #g=pclass.gaussian3(#once this one is called it will need the last 6 params, meaning g2 will need the 6 before the 6)
+        if NG ==3:
+            g=pclass.gaussian2(params[-12:-6]) #call last 6 in params
+            g=pclass.gaussian3(params [-6:]) #once this one is called it will need the last 6 params, meaning g2 will need the 6 before the 6)
+        if NG==2:
+            g=pclass.gaussian2(params [-6:])
         #print (specifics)
 
-        calcgauss = pclass.calc_gaussian(xdata_tuple,2)
+        calcgauss = pclass.calc_gaussian(xdata_tuple,NG)
+        sum = sum + calcgauss
             
-    return calcgauss
+    return sum
 
 
 ####################################################################################################
@@ -206,6 +210,7 @@ def calc_slope(channel, col, row, source):
                #'kplr2013065115251_ffi-cal.fits', #'kplr2013098115308_ffi-cal.fits']
 
 
+    ffielist = ['kplr2009114174833_ffi-uncert.fits']
 ###### Makes the plot look nice #######
 
     plt.figure(figsize=(11,8)) 
@@ -241,6 +246,7 @@ def calc_slope(channel, col, row, source):
         #ax2 = ax1.twiny()
         for icount, i in enumerate(ffilist):     
             a = p.open(i)
+            e =p.open (ffielist [icount])
 
             quarter = a[0].header['quarter']
 
@@ -253,7 +259,8 @@ def calc_slope(channel, col, row, source):
 
             if season == j:
 
-                img = a[channel[season]].data 
+                img = a[channel[season]].data
+                err= e[channel[season]].data
               
                 img -= np.median(img)
                 #print img.shape
@@ -291,7 +298,8 @@ def calc_slope(channel, col, row, source):
                 xmax2 = int(min([int(col[season])+aper/2,img.shape[1]]))
                 
                 pimg = img[ymin:ymax,xmin:xmax] ###big chunk around the star we care about, the large box not the little boxes    
-               # print(np.shape(pimg))          
+                perr= err[ymin:ymax,xmin:xmax]
+                # print(np.shape(pimg))          
                 
                 if np.max(pimg) > -1005:
                 
@@ -311,7 +319,7 @@ def calc_slope(channel, col, row, source):
                             rowd, cold, amp =findothersources(pimg, row[season] - ymin, col[season] - xmin) ##postitions of 10 brightest stars surrounding
                             #print (rowd,cold,amp)
 
-                    initial_guess=np.concatenate((amp,rowd,cold,[2,3,np.pi/4],[0.5,2,2,2,3,np.pi/4]))
+                    initial_guess=np.concatenate((amp,rowd,cold,[2,3,np.pi/4],[0.5,2,2,2,3,np.pi/4],[0.5,1,-1,3,2,np.pi/5]))
                     #print (initial_guess)
 
 #we need 6(NG-1) but they need to be actual numbers in order (rel.amp,xoffset,yoffset,sigx,sigy,theta)
@@ -323,10 +331,12 @@ def calc_slope(channel, col, row, source):
                 #print (np.shape(x))
                 xdata= np.vstack((x.ravel(),y.ravel())) #rearranges the data from (x,y,z) to (x,y)
                 zdata = pimg.ravel()
+                edata = perr.ravel()
                 #print (np.shape(xdata))
                 #print (len(zdata))
+                print (np.min(zdata))
 
-                popt,pcov=curve_fit(fitter,xdata,zdata,p0=initial_guess)
+                popt,pcov=curve_fit(fitter,xdata,zdata,p0=initial_guess,sigma=edata)
 #optimal result,covarience  -> (matrix that tells you how much changing one guess affects the rest), if you take the square root you get the error bars
                 print (popt)
                 model=fitter(xdata,popt)
@@ -336,21 +346,21 @@ def calc_slope(channel, col, row, source):
 ########################################################################################################
 
     plt.subplot(2,2,2)
-    b=plt.imshow(model.reshape(npix,npix),vmax=np.percentile(pimg,99))
+    b=plt.imshow(model.reshape(npix,npix),vmax=np.percentile(pimg,99),interpolation='nearest',cmap='seismic')
     plt.colorbar(b)
-    plt.title('Gaussian Model')
+    plt.title('3 Gaussian Model')
     plt.subplot(2,2,1)
-    a=plt.imshow(pimg,interpolation='nearest',vmax=np.percentile(pimg,99))
+    a=plt.imshow(pimg,interpolation='nearest',vmax=np.percentile(pimg,99),cmap='seismic')
     plt.colorbar(a)
     plt.title('Raw Data')
     plt.subplot(2,2,3)
     guess= fitter (xdata,initial_guess)
-    c=plt.imshow(guess.reshape(npix,npix))
+    c=plt.imshow(guess.reshape(npix,npix),interpolation='nearest',cmap='seismic')
     plt.colorbar(c)
     plt.title('Initial Guess')
     plt.subplot(2,2,4)
     residuals= pimg-model.reshape(npix,npix)
-    d=plt.imshow(residuals,vmax=np.percentile(pimg,99))
+    d=plt.imshow(residuals,vmax=np.percentile(pimg,99), vmin = -1*np.percentile(pimg, 99),interpolation='nearest',cmap='seismic')
     plt.colorbar(d)
     plt.title('Residuals')
     plt.show()
