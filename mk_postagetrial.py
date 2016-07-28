@@ -1,3 +1,7 @@
+# The code begins at the bottom by identifying the sun-like stars and putting them into a list
+# Section 2 is the photometry section where the ffi's and uncertainties are loaded in and unpacked. 
+# In order to fit different number of gaussians remeber to change NG, initial_guess, and the title of the plot
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pyfits as p
@@ -51,7 +55,7 @@ def findothersources(imgt, xtarg, ytarg):
         while foundone == 0:
             k = np.argmax(image)
             j,i = np.unravel_index(k, image.shape)
-            if image[j,i] > 175000.9:
+            if image[j,i] > 150000.9:
                 image[max(j-4, 0):min(j+5,sizeimg+1),max(i-4,0):min(i+5, sizeimg+1)] = 0.0
             else:
                 foundone = 1
@@ -72,9 +76,9 @@ def findothersources(imgt, xtarg, ytarg):
     #print sources
     return sources[0:counter,0], sources[0:counter, 1],sources[0:counter,2] #return amp
 
-###############################################################################################
-################################# Parameters' Class  ##########################################
-###############################################################################################
+#---------------------------------------------------------------------------------------------------------------------------
+#                                                Parameters' Class  
+#---------------------------------------------------------------------------------------------------------------------------
 
   
 class Parameters (object):
@@ -126,9 +130,9 @@ class Parameters (object):
         self.sigma_y3 = f[4]
         self.theta3 = f[5]
 
-########################################################################################
-############################### Fitting Multiple Gausians ##############################
-########################################################################################
+#----------------------------------------------------------------------------------------------------------------
+#                                         Fitting Multiple Gausians 
+#----------------------------------------------------------------------------------------------------------------
 
 def gaussian(xdata_tuple,N,*params):
     (x,y) = xdata_tuple
@@ -177,10 +181,9 @@ def fitter(xdata_tuple,*params):
             
     return sum
 
-
-####################################################################################################
-###################################### Photometry Section (2) ##########################################
-####################################################################################################
+#------------------------------------------------------------------------------------------------------------------
+#                                         Photometry Section (2) 
+#------------------------------------------------------------------------------------------------------------------
 
 def calc_slope(channel, col, row, source):
 
@@ -190,28 +193,47 @@ def calc_slope(channel, col, row, source):
     d3 = np.array([])
 
 
-    ffilist = ['kplr2009114174833_ffi-cal.fits'] #'kplr2009114204835_ffi-cal.fits', #'kplr2009115002613_ffi-cal.fits',
-               #'kplr2009115053616_ffi-cal.fits', #'kplr2009115080620_ffi-cal.fits', #'kplr2009115131122_ffi-cal.fits',
-               #'kplr2009115173611_ffi-cal.fits', #'kplr2009116035924_ffi-cal.fits', ##'kplr2009170043915_ffi-cal.fits',
-               #'kplr2009231194831_ffi-cal.fits', #'kplr2009260000800_ffi-cal.fits', #'kplr2009292020429_ffi-cal.fits',
-               #'kplr2009322233047_ffi-cal.fits', #'kplr2009351005245_ffi-cal.fits', #'kplr2010019225502_ffi-cal.fits',
-               #'kplr2010020005046_ffi-cal.fits', #'kplr2010049182302_ffi-cal.fits', #'kplr2010078174524_ffi-cal.fits',
-               #'kplr2010111125026_ffi-cal.fits', #'kplr2010140101631_ffi-cal.fits', #'kplr2010174164113_ffi-cal.fits', 
-               #'kplr2010203012215_ffi-cal.fits', #'kplr2010234192745_ffi-cal.fits', #'kplr2010265195356_ffi-cal.fits',
-               #'kplr2010296192119_ffi-cal.fits', #'kplr2010326181728_ffi-cal.fits', #'kplr2010356020128_ffi-cal.fits',
-               #'kplr2011024134926_ffi-cal.fits', #'kplr2011053174401_ffi-cal.fits', #'kplr2011116104002_ffi-cal.fits',
-               #'kplr2011145152723_ffi-cal.fits', #'kplr2011177110110_ffi-cal.fits', #'kplr2011208112727_ffi-cal.fits',
-               #'kplr2011240181752_ffi-cal.fits', #'kplr2011271191331_ffi-cal.fits', #'kplr2011303191211_ffi-cal.fits',
-               #'kplr2011334181008_ffi-cal.fits', #'kplr2012004204112_ffi-cal.fits', #'kplr2012032101442_ffi-cal.fits',
-               #'kplr2012060123308_ffi-cal.fits', #'kplr2012088132324_ffi-cal.fits', #'kplr2012121122500_ffi-cal.fits',
-               #'kplr2012151105138_ffi-cal.fits', #'kplr2012179140901_ffi-cal.fits', #'kplr2012211123923_ffi-cal.fits',
-               #'kplr2012242195726_ffi-cal.fits', #'kplr2012277203051_ffi-cal.fits', #'kplr2012310200152_ffi-cal.fits',
-               #'kplr2012341215621_ffi-cal.fits', #'kplr2013011160902_ffi-cal.fits', #'kplr2013038133130_ffi-cal.fits',
-               #'kplr2013065115251_ffi-cal.fits', #'kplr2013098115308_ffi-cal.fits']
+    ffilist = ['kplr2009114174833_ffi-cal.fits', 'kplr2009114204835_ffi-cal.fits', 'kplr2009115002613_ffi-cal.fits',
+               'kplr2009115053616_ffi-cal.fits', 'kplr2009115080620_ffi-cal.fits', 'kplr2009115131122_ffi-cal.fits',
+               'kplr2009115173611_ffi-cal.fits', 'kplr2009116035924_ffi-cal.fits', ##'kplr2009170043915_ffi-cal.fits',
+               'kplr2009231194831_ffi-cal.fits', 'kplr2009260000800_ffi-cal.fits', 'kplr2009292020429_ffi-cal.fits',
+               'kplr2009322233047_ffi-cal.fits', 'kplr2009351005245_ffi-cal.fits', 'kplr2010019225502_ffi-cal.fits',
+               'kplr2010020005046_ffi-cal.fits', 'kplr2010049182302_ffi-cal.fits', 'kplr2010078174524_ffi-cal.fits',
+               'kplr2010111125026_ffi-cal.fits', 'kplr2010140101631_ffi-cal.fits', 'kplr2010174164113_ffi-cal.fits', 
+               'kplr2010203012215_ffi-cal.fits', 'kplr2010234192745_ffi-cal.fits', 'kplr2010265195356_ffi-cal.fits',
+               'kplr2010296192119_ffi-cal.fits', 'kplr2010326181728_ffi-cal.fits', 'kplr2010356020128_ffi-cal.fits',
+               'kplr2011024134926_ffi-cal.fits', 'kplr2011053174401_ffi-cal.fits', 'kplr2011116104002_ffi-cal.fits',
+               'kplr2011145152723_ffi-cal.fits', 'kplr2011177110110_ffi-cal.fits', 'kplr2011208112727_ffi-cal.fits',
+               'kplr2011240181752_ffi-cal.fits', 'kplr2011271191331_ffi-cal.fits', 'kplr2011303191211_ffi-cal.fits',
+               'kplr2011334181008_ffi-cal.fits', 'kplr2012004204112_ffi-cal.fits', 'kplr2012032101442_ffi-cal.fits',
+               'kplr2012060123308_ffi-cal.fits', 'kplr2012088132324_ffi-cal.fits', 'kplr2012121122500_ffi-cal.fits',
+               'kplr2012151105138_ffi-cal.fits', 'kplr2012179140901_ffi-cal.fits', 'kplr2012211123923_ffi-cal.fits',
+               'kplr2012242195726_ffi-cal.fits', 'kplr2012277203051_ffi-cal.fits', 'kplr2012310200152_ffi-cal.fits',
+               'kplr2012341215621_ffi-cal.fits', 'kplr2013011160902_ffi-cal.fits', 'kplr2013038133130_ffi-cal.fits',
+               'kplr2013065115251_ffi-cal.fits', 'kplr2013098115308_ffi-cal.fits']
+    #ffilist = ['kplr2009114174833_ffi-cal.fits']
 
+    ffielist = ['kplr2009114174833_ffi-uncert.fits','kplr2009114204835_ffi-uncert.fits', 'kplr2009115002613_ffi-uncert.fits',
+               'kplr2009115053616_ffi-uncert.fits', 'kplr2009115080620_ffi-uncert.fits', 'kplr2009115131122_ffi-uncert.fits',
+               'kplr2009115173611_ffi-uncert.fits', 'kplr2009116035924_ffi-uncert.fits', ##'kplr2009170043915_ffi-uncert.fits',
+               'kplr2009231194831_ffi-uncert.fits', 'kplr2009260000800_ffi-uncert.fits', 'kplr2009292020429_ffi-uncert.fits',
+               'kplr2009322233047_ffi-uncert.fits', 'kplr2009351005245_ffi-uncert.fits', 'kplr2010019225502_ffi-uncert.fits',
+               'kplr2010020005046_ffi-uncert.fits', 'kplr2010049182302_ffi-uncert.fits', 'kplr2010078174524_ffi-uncert.fits',
+               'kplr2010111125026_ffi-uncert.fits', 'kplr2010140101631_ffi-uncert.fits', 'kplr2010174164113_ffi-uncert.fits', 
+               'kplr2010203012215_ffi-uncert.fits', 'kplr2010234192745_ffi-uncert.fits', 'kplr2010265195356_ffi-uncert.fits',
+               'kplr2010296192119_ffi-uncert.fits', 'kplr2010326181728_ffi-uncert.fits', 'kplr2010356020128_ffi-uncert.fits',
+               'kplr2011024134926_ffi-uncert.fits', 'kplr2011053174401_ffi-uncert.fits', 'kplr2011116104002_ffi-uncert.fits',
+               'kplr2011145152723_ffi-uncert.fits', 'kplr2011177110110_ffi-uncert.fits', 'kplr2011208112727_ffi-uncert.fits',
+               'kplr2011240181752_ffi-uncert.fits', 'kplr2011271191331_ffi-uncert.fits', 'kplr2011303191211_ffi-uncert.fits',
+               'kplr2011334181008_ffi-uncert.fits', 'kplr2012004204112_ffi-uncert.fits', 'kplr2012032101442_ffi-uncert.fits',
+               'kplr2012060123308_ffi-uncert.fits', 'kplr2012088132324_ffi-uncert.fits', 'kplr2012121122500_ffi-uncert.fits',
+               'kplr2012151105138_ffi-uncert.fits', 'kplr2012179140901_ffi-uncert.fits', 'kplr2012211123923_ffi-uncert.fits',
+               'kplr2012242195726_ffi-uncert.fits', 'kplr2012277203051_ffi-uncert.fits', 'kplr2012310200152_ffi-uncert.fits',
+               'kplr2012341215621_ffi-uncert.fits', 'kplr2013011160902_ffi-uncert.fits', 'kplr2013038133130_ffi-uncert.fits',
+               'kplr2013065115251_ffi-uncert.fits', 'kplr2013098115308_ffi-uncert.fits']
 
-    ffielist = ['kplr2009114174833_ffi-uncert.fits']
-###### Makes the plot look nice #######
+    
+#--------------------------------- Makes the plot look nice ---------------------------------------------------------
 
     plt.figure(figsize=(11,8)) 
     #ax1 = fig.add_subplot(2, 2, j+1)
@@ -224,9 +246,9 @@ def calc_slope(channel, col, row, source):
 
     slope = np.zeros(4)
 
-####################################################################################################################
-####################################### Defining the  Postage Stamp ################################################
-####################################################################################################################
+#---------------------------------------------------------------------------------------------------------------------
+#                                               Defining the  Postage Stamp 
+#---------------------------------------------------------------------------------------------------------------------
 
     if channel[3] in [49,50,51,52]:
         vals=[1,2,3,0]
@@ -241,11 +263,13 @@ def calc_slope(channel, col, row, source):
         counter = 0
         d0 = np.array([])
 
-#######opens fits files one at a time########
+#------------- Opens fits files one at a time ----------------------------
 
         #ax2 = ax1.twiny()
         for icount, i in enumerate(ffilist):     
             a = p.open(i)
+            print (i)
+            time=a[5].header['MJDEND']
             e =p.open (ffielist [icount])
 
             quarter = a[0].header['quarter']
@@ -255,7 +279,7 @@ def calc_slope(channel, col, row, source):
             else:
                 season = (int(quarter) - 2) % 4
 
-######### selects pixels we care about #########
+#------------- Selects pixels we care about ----------------------------
 
             if season == j:
 
@@ -266,11 +290,6 @@ def calc_slope(channel, col, row, source):
                 #print img.shape
                 npix = 100
                 aper = 11
-                #ymin = int(max([int(row[season])-npix/2,0]))
-                #ymax = int(min([int(row[season])+npix/2,img.shape[0]]))
-                #xmin = int(max([int(col[season])-npix/2,0]))
-                #xmax = int(min([int(col[season])+npix/2,img.shape[1]]))
-
                 ymin = int(row[season]) - npix/2
                 ymax = int(row[season]) + npix/2
 
@@ -297,7 +316,7 @@ def calc_slope(channel, col, row, source):
                 xmin2 = int(max([int(col[season])-aper/2,0]))
                 xmax2 = int(min([int(col[season])+aper/2,img.shape[1]]))
                 
-                pimg = img[ymin:ymax,xmin:xmax] ###big chunk around the star we care about, the large box not the little boxes    
+                pimg = img[ymin:ymax,xmin:xmax] ##big chunk around the star we care about, the large box not the little boxes    
                 perr= err[ymin:ymax,xmin:xmax]
                 # print(np.shape(pimg))          
                 
@@ -305,7 +324,7 @@ def calc_slope(channel, col, row, source):
                 
                     #print np.max(pimg)
                     '''
-                    aplot = plt.imshow((pimg), interpolation='nearest', cmap='gray')
+                    aplot = plt.imshow((pimg), interpolation='nearest', cmap='gray',vmax=np.percentile(pimg,99))
                     plt.colorbar(aplot)
                     plt.show()
                     '''
@@ -318,8 +337,11 @@ def calc_slope(channel, col, row, source):
                         except:
                             rowd, cold, amp =findothersources(pimg, row[season] - ymin, col[season] - xmin) ##postitions of 10 brightest stars surrounding
                             #print (rowd,cold,amp)
-
-                    initial_guess=np.concatenate((amp,rowd,cold,[2,3,np.pi/4],[0.5,2,2,2,3,np.pi/4],[0.5,1,-1,3,2,np.pi/5]))
+                
+                    try:
+                        initial_guess= popt
+                    except:
+                        initial_guess=np.concatenate((amp,rowd,cold,[2,3,np.pi/4],[0.5,2,2,2,3,np.pi/4],[0.5,1,-1,3,2,np.pi/5]))
                     #print (initial_guess)
 
 #we need 6(NG-1) but they need to be actual numbers in order (rel.amp,xoffset,yoffset,sigx,sigy,theta)
@@ -334,17 +356,26 @@ def calc_slope(channel, col, row, source):
                 edata = perr.ravel()
                 #print (np.shape(xdata))
                 #print (len(zdata))
-                print (np.min(zdata))
-
+                #print (np.min(zdata))
+                
                 popt,pcov=curve_fit(fitter,xdata,zdata,p0=initial_guess,sigma=edata)
 #optimal result,covarience  -> (matrix that tells you how much changing one guess affects the rest), if you take the square root you get the error bars
                 print (popt)
                 model=fitter(xdata,popt)
                 
-########################################################################################################                
-####################################### Plotting Section ###############################################
-########################################################################################################
-
+                f = open("stardata/" + str(source) + '.txt','a')
+                f.write('%s ' %time)
+                for item in range(len(popt)):
+                    f.write('%s ' %popt[item])
+                    
+                f.write('\n') #makes a new line
+                f.close()
+#----------------------------------------------------------------------------------------------------------------------------------                
+#                                                  Plotting Section 
+#----------------------------------------------------------------------------------------------------------------------------------
+#if plotting =1 do this
+#insert flag
+    
     plt.subplot(2,2,2)
     b=plt.imshow(model.reshape(npix,npix),vmax=np.percentile(pimg,99),interpolation='nearest',cmap='seismic')
     plt.colorbar(b)
@@ -364,12 +395,12 @@ def calc_slope(channel, col, row, source):
     plt.colorbar(d)
     plt.title('Residuals')
     plt.show()
-    return pimg
+    return pimg,popt
 
-######only runs from python command line, not from import########  start point 1                  
+#----------------- Only runs from python command line, not from import,  start point 1 ---------------------------------------------                  
 if __name__ == '__main__':
 
-    source = 3629717
+    source = 3629717 #this will become a list of sun like stars, put it into a for loop to run calc_slope
     client = kplr.API()
     targ = client.target(source)
     
@@ -386,4 +417,6 @@ if __name__ == '__main__':
     #cold = np.array([-7, -10, 45, -33])
     #rowd = np.array([-22, 27, 21, 34])
 
-    pimg=calc_slope(channel, col, row, source) 
+    pimg,popt =calc_slope(channel, col, row, source) 
+
+    
