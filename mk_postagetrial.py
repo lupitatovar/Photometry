@@ -168,6 +168,7 @@ def fitter(xdata_tuple,*params):
 #gives the specific parameters we will be using, we always want 3 times(amp,x,y positions) the number of gaussians + the 3 fixed params (sigma_x,sigma_y, theta)
 
         pclass= Parameters() #call first gaussian function from parameters class to define g1
+        
         g= pclass.gaussian1(specifics)
         if NG ==3:
             g=pclass.gaussian2(params[-12:-6]) #call last 6 in params
@@ -175,7 +176,13 @@ def fitter(xdata_tuple,*params):
         if NG==2:
             g=pclass.gaussian2(params [-6:])
         #print (specifics)
-
+        if pclass.amp < 0:
+            return np.inf
+        elif pclass.amp2 <0:
+            return np.inf
+        elif pclass.amp3 < 0:
+            return np.inf
+        
         calcgauss = pclass.calc_gaussian(xdata_tuple,NG)
         sum = sum + calcgauss
             
@@ -211,7 +218,6 @@ def calc_slope(channel, col, row, source):
                'kplr2012242195726_ffi-cal.fits', 'kplr2012277203051_ffi-cal.fits', 'kplr2012310200152_ffi-cal.fits',
                'kplr2012341215621_ffi-cal.fits', 'kplr2013011160902_ffi-cal.fits', 'kplr2013038133130_ffi-cal.fits',
                'kplr2013065115251_ffi-cal.fits', 'kplr2013098115308_ffi-cal.fits']
-    #ffilist = ['kplr2009114174833_ffi-cal.fits']
 
     ffielist = ['kplr2009114174833_ffi-uncert.fits','kplr2009114204835_ffi-uncert.fits', 'kplr2009115002613_ffi-uncert.fits',
                'kplr2009115053616_ffi-uncert.fits', 'kplr2009115080620_ffi-uncert.fits', 'kplr2009115131122_ffi-uncert.fits',
@@ -341,7 +347,7 @@ def calc_slope(channel, col, row, source):
                     try:
                         initial_guess= popt
                     except:
-                        initial_guess=np.concatenate((amp,rowd,cold,[2,3,np.pi/4],[0.5,2,2,2,3,np.pi/4],[0.5,1,-1,3,2,np.pi/5]))
+                        initial_guess=np.concatenate((amp,rowd,cold,[0.8,0.8,np.pi/4],[0.5,1,1,0.7,0.7,np.pi/4],[0.5,1,-1,0.5,0.5,np.pi/5]))
                     #print (initial_guess)
 
 #we need 6(NG-1) but they need to be actual numbers in order (rel.amp,xoffset,yoffset,sigx,sigy,theta)
@@ -357,8 +363,14 @@ def calc_slope(channel, col, row, source):
                 #print (np.shape(xdata))
                 #print (len(zdata))
                 #print (np.min(zdata))
-                
-                popt,pcov=curve_fit(fitter,xdata,zdata,p0=initial_guess,sigma=edata)
+                lig = len(initial_guess)
+                bounded1 = [lig-6, lig-12]
+                bounded2 = [lig-11,lig-10,lig-5,lig-4]
+                bounded3 = [lig-9,lig-8,lig-3,lig-2]
+                lbounds = tuple(0 if variable in bounded1 else -3 if variable in bounded2 else 0.2 if variable in bounded3 else -np.inf for variable in range (lig))
+                ubounds = tuple(1 if variable in bounded1 else 3 if variable in bounded2 else 2 if variable in bounded3 else np.inf for variable in range (lig))
+            
+                popt,pcov=curve_fit(fitter,xdata,zdata,p0=initial_guess,sigma=edata,bounds=(lbounds,ubounds))
 #optimal result,covarience  -> (matrix that tells you how much changing one guess affects the rest), if you take the square root you get the error bars
                 print (popt)
                 model=fitter(xdata,popt)
