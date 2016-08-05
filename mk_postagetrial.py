@@ -261,6 +261,12 @@ def calc_slope(channel, col, row, source):
     else:
         vals=[0,1,2,3]
     for k,j in enumerate(vals):
+        try:
+            del popt
+            
+        except:
+            pass 
+            
         phot1 = np.array([])
         phot2 = np.array([]) 
         phot3 = np.array([]) 
@@ -345,8 +351,12 @@ def calc_slope(channel, col, row, source):
                             #print (rowd,cold,amp)
                 
                     try:
-                        initial_guess= popt
+                        if k == lastk:
+                            initial_guess= popt
+                        else:
+                            initial_guess=np.concatenate((amp,rowd,cold,[0.8,0.8,np.pi/4],[0.5,1,1,0.7,0.7,np.pi/4],[0.5,1,-1,0.5,0.5,np.pi/5]))
                     except:
+                        lastk = k
                         initial_guess=np.concatenate((amp,rowd,cold,[0.8,0.8,np.pi/4],[0.5,1,1,0.7,0.7,np.pi/4],[0.5,1,-1,0.5,0.5,np.pi/5]))
                     #print (initial_guess)
 
@@ -364,11 +374,17 @@ def calc_slope(channel, col, row, source):
                 #print (len(zdata))
                 #print (np.min(zdata))
                 lig = len(initial_guess)
-                bounded1 = [lig-6, lig-12]
-                bounded2 = [lig-11,lig-10,lig-5,lig-4]
-                bounded3 = [lig-9,lig-8,lig-3,lig-2]
-                lbounds = tuple(0 if variable in bounded1 else -3 if variable in bounded2 else 0.2 if variable in bounded3 else -np.inf for variable in range (lig))
-                ubounds = tuple(1 if variable in bounded1 else 3 if variable in bounded2 else 2 if variable in bounded3 else np.inf for variable in range (lig))
+                try:
+                    lbounds=tuple(-np.inf if variable < lig-15 else np.min([popt[variable]*0.99,popt[variable]*1.01])  for variable in range (lig))
+                    ubounds=tuple(np.inf if variable < lig-15 else np.max([popt[variable]*1.01,popt[variable]*0.99]) for variable in range (lig))
+                 
+                except:
+                    bounded1 = [lig-6, lig-12]
+                    bounded2 = [lig-11,lig-10,lig-5,lig-4]
+                    bounded3 = [lig-9,lig-8,lig-3,lig-2]
+                    bounded4 = [lig-7,lig-1,lig-13]
+                    lbounds = tuple(0 if variable in bounded1 else -3 if variable in bounded2 else 0.2 if variable in bounded3 else 0 if variable in bounded4 else -np.inf for variable in range (lig))
+                    ubounds = tuple(1 if variable in bounded1 else 3 if variable in bounded2 else 2 if variable in bounded3 else np.pi if variable in bounded4 else np.inf for variable in range (lig))
             
                 popt,pcov=curve_fit(fitter,xdata,zdata,p0=initial_guess,sigma=edata,bounds=(lbounds,ubounds))
 #optimal result,covarience  -> (matrix that tells you how much changing one guess affects the rest), if you take the square root you get the error bars
