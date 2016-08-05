@@ -1,0 +1,25 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
+
+npix=100
+xlist=list(range(0,npix))
+y=np.tile(xlist,npix).reshape((npix,npix))
+x=np.transpose(y)
+
+pimg=np.loadtxt('pimg.txt',delimiter=',')
+model=np.loadtxt('model.txt',delimiter=',')
+
+fig = plt.figure()
+ax = fig.gca(projection='3d')
+surf = ax.plot_surface(x, y, pimg, rstride=1, cstride=1, cmap=cm.Blues,linewidth=0, antialiased=False,alpha=0.2,vmax=30000)
+surfm = ax.plot_surface(x, y, model.reshape(npix,npix), rstride=1, cstride=1, cmap=cm.Reds,linewidth=0, antialiased=False)
+ax.set_zlim(0, 50000)
+#ax.set_ylim(40,60)
+#ax.set_xlim(40,60)
+fig.colorbar(surf, shrink=0.5, aspect=5)
+fig.colorbar(surfm, shrink=0.5,aspect=5)
+
+plt.show()
