@@ -1,0 +1,118 @@
+#Integrates to measure the brightness
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+ig = np.loadtxt('stardata/3629717.txt')
+
+class Parameters (object):  
+
+    def calc_gaussian(self):
+         a = self.amp*self.sigma_x*self.sigma_y
+         b = self.amp2*self.sigma_x2*self.sigma_y2
+         c = self.amp3*self.sigma_x3*self.sigma_y3
+         t = a+b+c
+         return t
+         
+    def gaussian1 (self,f):
+        (sigma_x,sigma_y,theta,amp,xc,yc)=f
+        self.amp=amp
+        self.xc=xc
+        self.yc=yc
+        self.sigma_x= sigma_x
+        self.sigma_y= sigma_y
+        self.theta= theta
+
+    def gaussian2 (self,f):
+        self.amp2 = f[0]*self.amp
+        self.xc2 = f[1]+self.xc
+        self.yc2 = f[2]+self.yc
+        self.sigma_x2 = f[3]
+        self.sigma_y2 = f[4]
+        self.theta2 =  f[5]
+
+
+    def gaussian3 (self,f):
+        self.amp3 = f[0]*self.amp
+        self.xc3 = f[1]+self.xc
+        self.yc3 = f[2]+self.yc
+        self.sigma_x3 = f[3]
+        self.sigma_y3 = f[4]
+        self.theta3 = f[5]
+nffi=11
+denominator = np.zeros(nffi)
+
+for A in range (35):
+    
+    integral=np.zeros(nffi)
+    for i in range(nffi):
+        pt=ig[i][1:]
+        N=int((len(pt)-3-(6*(2)))/3)        
+        specifics= np.append(pt[3*N:(3*N)+3] , pt[A:3*N:N])
+        #print (specifics)
+        #print (pt[3*N:(3*N)+3])
+        #print (pt[A:3*N:N])
+        #print(N)
+        #print (np.shape(pt))
+        #print (pt[-12:-6])
+        pclass= Parameters()
+        g= pclass.gaussian1(specifics)
+        g=pclass.gaussian2(pt[-12:-6]) 
+        g=pclass.gaussian3(pt[-6:])
+
+        integral[i]=pclass.calc_gaussian()
+        #print (integral)
+        #print (ig[0][0])
+    if A==1:
+        numerator= integral
+    else:
+        denominator += integral
+        
+  
+#----------------------------------------------------------------------------------
+#--------------------------- Plotting the Light Curve------------------------------
+#----------------------------------------------------------------------------------
+
+plt.figure(figsize=(11,13)) 
+ax1 = plt.gca() 
+plt.gcf().subplots_adjust(bottom=0.17, wspace=0.0, top=0.86, right=0.94, left=0.16)
+
+qdate = np.array([54964, 55002, 55092, 55184, 55277, 55371, 55462, 55567, 55649, 55739, 55834, 55930, 56014, 56103, 56203, 56307, 56397])
+
+plt.rcParams['axes.linewidth']=3
+plt.rcParams['xtick.major.width'] = 2
+plt.rcParams['ytick.major.width'] = 2
+plt.rcParams['xtick.minor.width'] = 2
+plt.rcParams['ytick.minor.width'] = 2
+plt.rc('xtick.major', size=8, pad=8)
+plt.rc('xtick.minor', size=6, pad=5)
+plt.rc('ytick.major', size=8, pad=8)
+plt.rc('ytick.minor', size=6, pad=5)
+
+fmt = ['ko', 'rD', 'b^', 'gs']
+offsets = np.array([0.001, 0.002, 0.0, 0.006])
+
+ax1.set_xlim(54833, 54833+1600)
+#ax1.set_ylim(0.965, 1.020)
+ax1.set_xticks(np.arange(54900, 54833+1601, 200))
+ax1.set_xticklabels(np.arange(54833, 54833+1601, 200)-54833, fontsize=21)
+ax1.set_yticks(np.arange(0.965, 1.021, 0.005))
+ax1.set_yticklabels(['0.965', '0.970', '0.975', '0.980', '0.985', '0.990', '0.995', '1.000','1.005', '1.010', '1.015', '1.020'], fontsize=21)
+ax1.yaxis.set_label_coords(-0.13, 0.5)
+ax1.xaxis.set_label_coords(0.5, -0.09)
+ax1.set_ylabel('Relative Flux', fontsize=28)
+ax1.set_xlabel('Time (MJD - 2454833)', fontsize=28)
+ax2 = ax1.twiny()
+ax2.set_xlim(ax1.get_xlim())
+ax2.set_xticks(qdate)
+ax2.set_xticklabels(np.arange(1, 18, 1), fontsize=21)
+ax2.set_xlabel('Quarter', fontsize=28)
+
+yaxis=numerator#/denominator
+yaxis=yaxis/(np.median(yaxis))
+#ax1.set_ylim(0.90, 1.10)
+
+plt.plot(ig[:nffi,0],yaxis[:nffi] , 'o')
+
+
+plt.show()
