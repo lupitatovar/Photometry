@@ -3,7 +3,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-ig = np.loadtxt('stardata/3629717.txt')
+ig = np.loadtxt('stardata/8462852.txt')
+time = ig[:,0]
 
 class Parameters (object):  
 
@@ -39,7 +40,7 @@ class Parameters (object):
         self.sigma_x3 = f[3]
         self.sigma_y3 = f[4]
         self.theta3 = f[5]
-nffi=11
+nffi=52
 denominator = np.zeros(nffi)
 
 for A in range (35):
@@ -63,12 +64,27 @@ for A in range (35):
         integral[i]=pclass.calc_gaussian()
         #print (integral)
         #print (ig[0][0])
-    if A==1:
+    if A==30:
         numerator= integral
     else:
         denominator += integral
-        
-  
+    
+difftime = np.diff(time)
+print (difftime)
+
+switch = np.where(difftime<0)[0]
+print (switch)
+
+yaxis=numerator/denominator
+yaxis[0:switch[0]+1]=yaxis[0:switch[0]+1]/np.median(yaxis[0:switch[0]+1])
+yaxis[switch[0]+1:switch[1]+1]=yaxis[switch[0]+1:switch[1]+1]/np.median(yaxis[switch[0]+1:switch[1]+1])
+yaxis[switch[1]+1:switch[2]+1]=yaxis[switch[1]+1:switch[2]+1]/np.median(yaxis[switch[1]+1:switch[2]+1])
+yaxis[switch[2]+1:]=yaxis[switch[2]+1:]/np.median(yaxis[switch[2]+1:])
+
+print(yaxis[0:switch[0]+1])
+print (time[0:switch[0]+1])
+print(time[11])
+
 #----------------------------------------------------------------------------------
 #--------------------------- Plotting the Light Curve------------------------------
 #----------------------------------------------------------------------------------
@@ -96,8 +112,8 @@ ax1.set_xlim(54833, 54833+1600)
 #ax1.set_ylim(0.965, 1.020)
 ax1.set_xticks(np.arange(54900, 54833+1601, 200))
 ax1.set_xticklabels(np.arange(54833, 54833+1601, 200)-54833, fontsize=21)
-ax1.set_yticks(np.arange(0.965, 1.021, 0.005))
-ax1.set_yticklabels(['0.965', '0.970', '0.975', '0.980', '0.985', '0.990', '0.995', '1.000','1.005', '1.010', '1.015', '1.020'], fontsize=21)
+ax1.set_yticks(np.arange(0.90, 1.10, 0.02))
+ax1.set_yticklabels(np.arange(0.90,1.10,0.02), fontsize=21)
 ax1.yaxis.set_label_coords(-0.13, 0.5)
 ax1.xaxis.set_label_coords(0.5, -0.09)
 ax1.set_ylabel('Relative Flux', fontsize=28)
@@ -106,11 +122,10 @@ ax2 = ax1.twiny()
 ax2.set_xlim(ax1.get_xlim())
 ax2.set_xticks(qdate)
 ax2.set_xticklabels(np.arange(1, 18, 1), fontsize=21)
-ax2.set_xlabel('Quarter', fontsize=28)
+ax2.set_xlabel('Quarter limited range', fontsize=28)
 
-yaxis=numerator#/denominator
-yaxis=yaxis/(np.median(yaxis))
-#ax1.set_ylim(0.90, 1.10)
+
+ax1.set_ylim(0.90, 1.10)
 
 plt.plot(ig[:nffi,0],yaxis[:nffi] , 'o')
 
