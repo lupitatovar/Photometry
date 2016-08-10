@@ -257,9 +257,9 @@ def calc_slope(channel, col, row, source):
 #---------------------------------------------------------------------------------------------------------------------
 
     if channel[3] in [49,50,51,52]:
-        vals=[1,2,3,0]
+        vals=[0]
     else:
-        vals=[0,1,2,3]
+        vals=[3]
     for k,j in enumerate(vals):
         try:
             del popt
@@ -375,8 +375,8 @@ def calc_slope(channel, col, row, source):
                 #print (np.min(zdata))
                 lig = len(initial_guess)
                 try:
-                    lbounds=tuple(-np.inf if variable < lig-15 else np.min([popt[variable]*0.99,popt[variable]*1.01])  for variable in range (lig))
-                    ubounds=tuple(np.inf if variable < lig-15 else np.max([popt[variable]*1.01,popt[variable]*0.99]) for variable in range (lig))
+                    lbounds=tuple(-np.inf if variable < lig-15 else np.min([popt[variable]*0.999,popt[variable]*1.001])  for variable in range (lig))
+                    ubounds=tuple(np.inf if variable < lig-15 else np.max([popt[variable]*1.001,popt[variable]*0.999]) for variable in range (lig))
                  
                 except:
                     bounded1 = [lig-6, lig-12]
@@ -428,7 +428,7 @@ def calc_slope(channel, col, row, source):
 #----------------- Only runs from python command line, not from import,  start point 1 ---------------------------------------------                  
 if __name__ == '__main__':
 
-    source = 3629717 #this will become a list of sun like stars, put it into a for loop to run calc_slope
+    source = 8462852 #this will become a list of sun like stars, put it into a for loop to run calc_slope
     client = kplr.API()
     targ = client.target(source)
     
